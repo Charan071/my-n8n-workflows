@@ -1,6 +1,6 @@
 # My n8n Automation Projects
 
-A portfolio of automation workflows built with **n8n**, integrating tools like **Gmail API**, **Google Gemini**, **Slack**, **Jira**, **Pinecone**, and **OpenAI**.  
+A portfolio of automation workflows built with **n8n**, integrating tools like **Google API**, **LLMs Integration**, **CRMs**, **Vector Databases**, **Pinecone**, and **Function Nodes**.  
 Each project demonstrates practical use of AI and workflow automation for business processes.
 
 ---
