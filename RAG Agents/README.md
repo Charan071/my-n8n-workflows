@@ -1,6 +1,24 @@
 # RAG Agents (Retrieval-Augmented Generation)
 
+## Workflow Diagrams
+
+### AI Assistant Chatbot
+![AI Assistant Chatbot Workflow](./AI%20Assistant%20Chatbot.jpeg)
+
+### RAG Agent Architecture
+![RAG Agent Workflow](./RAG%20Agent.jpeg)
+
 A collection of intelligent AI agents built with **n8n**, **Pinecone**, and **OpenAI** that leverage Retrieval-Augmented Generation (RAG) to provide accurate, context-aware responses based on custom knowledge bases.
+
+## 📸 Workflow Previews
+
+### RAG Architecture
+![RAG Agent Workflow](./RAG%20Agent.jpeg)
+*Core RAG workflow showing document ingestion and query processing*
+
+### AI Assistant Chatbot
+![AI Assistant Chatbot](./AI%20Assistant%20Chatbot.jpeg)
+*Complete conversational AI assistant with RAG integration*
 
 ## 🎯 Purpose
 
@@ -30,8 +48,9 @@ These RAG workflows enable:
 
 ## 📁 Contents
 
-- `AI Assistant Chatbot.jpeg` - Visual workflow diagram for chatbot implementation
-- `RAG Agent.jpeg` - Visual workflow diagram for RAG architecture
+- `AI Assistant Chatbot.jpeg` - Visual workflow diagram for chatbot implementation (shown above)
+- `RAG Agent.jpeg` - Visual workflow diagram for RAG architecture (shown above)
+- `Aivara-rag.json` - n8n workflow file
 - `README.md` - This documentation file
 
 ## 🚀 Setup Instructions

@@ -1,5 +1,7 @@
 # Lead Enrichment Automation
 
+> **Note:** This workflow uses the Explorium API for lead enrichment. A workflow diagram will be added soon.
+
 An intelligent lead enrichment workflow powered by **n8n**, **Explorium API**, and **Google Sheets** that automatically enhances lead data with valuable business intelligence and contact information.
 
 ## 🎯 Purpose
@@ -32,8 +34,8 @@ This workflow automates lead enrichment by:
 
 ## 📁 Contents
 
-- `Lead Enrichment with Explorium.json` - n8n workflow file
-- `GCP_creds.json` - Google Cloud Platform credentials template
+- `Lead Enrichment with Explorium.json` - n8n workflow file (import this into your n8n instance)
+- `GCP_creds.json` - Google Cloud Platform credentials template (⚠️ never commit with real credentials)
 - `README.md` - This documentation file
 
 ## 🚀 Setup Instructions

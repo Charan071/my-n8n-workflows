@@ -1,6 +1,14 @@
 # Employee Onboarding Agent
 
+![HR Onboarding Agent Workflow](./HR%20Onbaording%20Agent.jpeg)
+
 An automated employee onboarding workflow built with **n8n** that integrates **Slack**, **Jira**, and **Microsoft Entra ID** (Azure AD) to streamline the new hire onboarding process.
+
+## 📸 Workflow Preview
+
+![HR Onboarding Agent Workflow](./HR%20Onbaording%20Agent.jpeg)
+
+*Complete HR onboarding automation workflow diagram*
 
 ## 🎯 Purpose
 
@@ -32,7 +40,7 @@ This workflow automates the employee onboarding journey by:
 
 ## 📁 Contents
 
-- `HR Onbaording Agent.jpeg` - Visual workflow diagram
+- `HR Onbaording Agent.jpeg` - Visual workflow diagram (shown above)
 - `README.md` - This documentation file
 
 ## 🚀 Setup Instructions

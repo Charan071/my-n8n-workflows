@@ -1,6 +1,14 @@
 # AI Email Inbox Agent
 
+![AI Email Inbox Agent Workflow](./AI%20Email%20inbox%20AGENT.png)
+
 An intelligent email automation workflow that leverages **n8n**, **Gmail API**, and **Google Gemini** to automatically process, categorize, and respond to emails.
+
+## 📸 Workflow Preview
+
+![AI Email Inbox Agent Workflow](./AI%20Email%20inbox%20AGENT.png)
+
+*Visual representation of the automated email processing workflow*
 
 ## 🎯 Purpose
 
@@ -27,7 +35,8 @@ This workflow automates email inbox management by:
 
 ## 📁 Contents
 
-- `AI Email inbox AGENT.png` - Visual workflow diagram
+- `AI Email inbox AGENT.png` - Visual workflow diagram (shown above)
+- `Email task routing agent (with Gmail).json` - n8n workflow file
 - `README.md` - This documentation file
 
 ## 🚀 Setup Instructions
