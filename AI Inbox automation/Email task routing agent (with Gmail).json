@@ -1,0 +1,806 @@
+{
+  "name": "Email task routing agent (with Gmail)",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "readStatus": "unread"
+        },
+        "options": {}
+      },
+      "id": "0280aa41-d55c-47e4-b99b-03b4c7c9e4e7",
+      "name": "New Email Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -64,
+        112
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "zf7osRP05LC5M6vB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        112
+      ],
+      "id": "59aa4843-6703-4c08-a516-52e7dc9c49fd",
+      "name": "Wait",
+      "webhookId": "9390ea45-6cf5-4488-bc97-4aed8e937647"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "818a575e-3cfc-487d-9861-789e765a2f76",
+              "leftValue": "={{ $json.text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        384,
+        112
+      ],
+      "id": "1a0dc61f-5fba-4fc6-aed4-9085968d7200",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        608,
+        208
+      ],
+      "id": "4bbce278-7cf3-451a-9415-ca8018d8c86f",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash-lite-preview",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash-lite-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an Email classifer.",
+              "role": "model"
+            },
+            {
+              "content": "=A customer or lead has sent an email. Your task is to determine the type of email based on its body.\n\nThe possible categories outputs are:\n- Sales: (emails about purchasing, product/service inquiries, quotes, demos)\n- Support: (emails about issues, troubleshooting, problems with products/services)\n- Billing: (emails about invoices, payments, charges, billing questions)\n\nRead the email below and respond with only one word: Sales, Support, or Billing. Do not include any extra text.\n\nEmail:\n{{ $json['Email Body'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        832,
+        16
+      ],
+      "id": "2827aebb-097e-453a-b4b4-04f2c61759b9",
+      "name": "Email Classifer",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "hlsxoSccxOCDKPgu",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.content.parts[0].text }}",
+                    "rightValue": "Sales",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "5682fa86-dce1-4011-8c26-f6a0c893537f"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Sales"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e3bb8ed2-31e8-484e-840d-a0e80b413254",
+                    "leftValue": "={{ $json.content.parts[0].text }}",
+                    "rightValue": "Support",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Support"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0996f962-1194-4c8c-b609-765580e3faa6",
+                    "leftValue": "={{ $json.content.parts[0].text }}",
+                    "rightValue": "Billing",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Billing"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1408,
+        0
+      ],
+      "id": "033a4eaa-9711-4dd3-9734-68c012734c84",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9c88c473-2aec-4b3e-999e-8803320ad026",
+              "name": "content.parts[0].text",
+              "value": "={{ $json.content.parts[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1184,
+        16
+      ],
+      "id": "8ca21273-037e-4d48-8499-3b469a272dec",
+      "name": "Task Assignee"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2f70430b-3ac7-4654-b709-d65448c79481",
+              "name": "Name",
+              "value": "={{ $('New Email Trigger').item.json.replyTo.value[0].name }}",
+              "type": "string"
+            },
+            {
+              "id": "5728fff6-ed21-4a4a-b226-99cea1ff7a20",
+              "name": "From email",
+              "value": "={{ $json.from.value[0].address }}",
+              "type": "string"
+            },
+            {
+              "id": "0905c45b-6bb0-47fd-b083-c0b83918a0ec",
+              "name": "Email subject",
+              "value": "={{ $json.headers.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "0f8508ac-a0b8-4ea5-9c2d-10b489d933ff",
+              "name": "Email Body",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        608,
+        16
+      ],
+      "id": "5a90e40c-b98b-43c3-b99a-6816c2b4b528",
+      "name": "Required Fields"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash-lite-preview",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash-lite-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are an AI assistant responsible for routing customer emails internally.",
+              "role": "model"
+            },
+            {
+              "content": "=Follow these rules exactly: 1. You must analyze the provided customer email and detected category. \n2. Determine urgency and assign a priority: \"High\", \"Medium\", or \"Low\".    \n- \"High\" = urgent or time-sensitive    - \"Medium\" = standard inquiry    \n- \"Low\" = general or non-urgent 3. Write a short internal notification email summarizing the customer’s message, including:\n- Customer name and email (if available)\n - Company name (if mentioned)    - Original message content    - Assigned priority\n- Recommended next steps for the sales team.\n\n4. You MUST output **only** a valid JSON object — no markdown, no code blocks, no explanations, no extra text. 5. The JSON object MUST have exactly these three keys and nothing else:    - \"priority\": one of [\"High\", \"Medium\", \"Low\"]    - \"subject\": a short subject line for the internal email    - \"body\": the body text for the internal email  Output format example (follow this structure exactly): {   \"priority\": \"Medium\",   \"subject\": \"New Inquiry - <Customer Name or Topic>\",   \"body\": \"Hello Sales Team,\\n<Customer name> has reached out with the following message:\\n\\n<original message>\\n\\nAssigned Priority: Medium\\n\\nNext Steps: <action for sales team>\" }\n\noriginal content: {{ $('New Email Trigger').item.json.text }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        -176
+      ],
+      "id": "85288bde-9059-4751-aa10-26d160370126",
+      "name": "Sales Team Email Generator",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "hlsxoSccxOCDKPgu",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('New Email Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_2003348177172934542"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2432,
+        -176
+      ],
+      "id": "a7335528-daec-42b8-a687-8dbd2faabf24",
+      "name": "labeling",
+      "webhookId": "0a98c50a-2877-45f1-9daa-b8e654a3dc2a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "zf7osRP05LC5M6vB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('New Email Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_4671413216460015066"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2432,
+        208
+      ],
+      "id": "b6cbaf5b-f740-4039-83f6-c01963257656",
+      "name": "labeling2",
+      "webhookId": "0a98c50a-2877-45f1-9daa-b8e654a3dc2a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "zf7osRP05LC5M6vB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash-lite-preview",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash-lite-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a Support Agent responsible for assisting customers with technical or product-related issues.\n\nFollow these rules exactly:\n1. Read the customer's email and determine the urgency: \"High\", \"Medium\", or \"Low\".\n   - High: critical system issues, outages, or urgent help requests\n   - Medium: normal support requests or troubleshooting\n   - Low: general guidance or informational queries\n\n2. Write a short internal support ticket summary for the support team that includes:\n   - Customer name and email (if provided)\n   - Company name (if mentioned)\n   - The issue or request described\n   - Assigned priority\n   - Recommended next steps\n\n3. You must output a valid JSON object only — no markdown, no code fences, no explanations.\n\nYour output must match this structure exactly:\n{\n  \"priority\": \"High|Medium|Low\",\n  \"subject\": \"Support Request - <short description>\",\n  \"body\": \"Hello Support Team,\\n<Customer name> has reported the following issue:\\n\\n<original message>\\n\\nAssigned Priority: <priority>\\n\\nNext Steps: <recommended action>\"\n}",
+              "role": "model"
+            },
+            {
+              "content": "=Customer email:\n{{ $('Required Fields').item.json['Email Body'] }}\n\nDetected category: {{ $('Task Assignee').item.json.content.parts[0].text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        16
+      ],
+      "id": "fab2dde9-52d5-4edd-bc37-456ae09ecafe",
+      "name": "Support Team Email Generator",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "hlsxoSccxOCDKPgu",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('New Email Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_7756393225623915859"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2432,
+        16
+      ],
+      "id": "8d7f685f-1da0-498b-aeab-e54c664e7e90",
+      "name": "labeling3",
+      "webhookId": "0a98c50a-2877-45f1-9daa-b8e654a3dc2a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "zf7osRP05LC5M6vB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "charan.naikk06@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2208,
+        -176
+      ],
+      "id": "8537f513-66fb-41f1-957e-1f292121ce36",
+      "name": "Notify Sales Team",
+      "webhookId": "eddcb69e-5a28-4674-934f-4fba226800f9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "zf7osRP05LC5M6vB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "charan.naikk06@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2208,
+        16
+      ],
+      "id": "e21a47c6-35d0-4fd8-9ee9-5847788d4df5",
+      "name": "Notify Support Team",
+      "webhookId": "eddcb69e-5a28-4674-934f-4fba226800f9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "zf7osRP05LC5M6vB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "charan.naikk06@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2208,
+        208
+      ],
+      "id": "05ca3b7e-0dc1-413f-9131-1b8d8b3c48e3",
+      "name": "Notify Billing Team",
+      "webhookId": "eddcb69e-5a28-4674-934f-4fba226800f9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "zf7osRP05LC5M6vB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash-lite-preview",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash-lite-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a Billing Support Agent responsible for handling invoices, payments, and subscription-related issues.\n\nFollow these rules exactly:\n1. Read the customer's email and determine urgency: \"High\", \"Medium\", or \"Low\".\n   - High: double charges, payment failures, or refund requests\n   - Medium: invoice clarifications, plan changes, or billing cycles\n   - Low: general account or pricing questions\n\n2. Write a short internal notification email for the finance/billing team that includes:\n   - Customer name and email (if available)\n   - Company name (if mentioned)\n   - Description of the billing issue\n   - Assigned priority\n   - Recommended next steps\n\n3. You must output a valid JSON object only — no markdown, no code fences, no explanations.\n\nOutput format must be exactly:\n{\n  \"priority\": \"High|Medium|Low\",\n  \"subject\": \"Billing Issue - <short summary>\",\n  \"body\": \"Hello Billing Team,\\n<Customer name> has reported the following issue:\\n\\n<original message>\\n\\nAssigned Priority: <priority>\\n\\nNext Steps: <recommended action>\"\n}",
+              "role": "model"
+            },
+            {
+              "content": "=Customer email:\n{{ $('Required Fields').item.json['Email Body'] }}\n\nDetected category: {{ $('Task Assignee').item.json.content.parts[0].text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        208
+      ],
+      "id": "98260cfa-0c61-48d8-ad0a-bcdcfa640eed",
+      "name": "Billing Team Email Generator",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "hlsxoSccxOCDKPgu",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Try to extract the raw text from various LLM output structures\nlet raw;\n\n// Handle Gemini structure\nif ($json.content && Array.isArray($json.content.parts)) {\n  raw = $json.content.parts\n    .map(p => (typeof p.text === 'string' ? p.text : ''))\n    .join('')\n    .trim();\n}\n\n// Handle OpenAI-like structure\nelse if ($json.message && typeof $json.message.content === 'string') {\n  raw = $json.message.content.trim();\n}\n\n// Fallback: try any string field\nelse if (typeof $json.text === 'string') {\n  raw = $json.text.trim();\n}\n\n// If still undefined, stringify whatever came in\nif (!raw || raw.length === 0) {\n  raw = JSON.stringify($json);\n}\n\n// Remove markdown fences or stray whitespace\nconst cleaned = raw.replace(/```json|```/g, '').trim();\n\n// Try to locate the first JSON object in case Gemini added text before/after it\nconst jsonMatch = cleaned.match(/\\{[\\s\\S]*\\}/);\nif (!jsonMatch) {\n  throw new Error('No JSON object found in Gemini response.\\nRaw: ' + cleaned);\n}\nconst jsonText = jsonMatch[0];\n\n// Parse the JSON safely\nlet parsed;\ntry {\n  parsed = JSON.parse(jsonText);\n} catch (e) {\n  throw new Error('Failed to parse JSON.\\nRaw text:\\n' + jsonText + '\\nError: ' + e.message);\n}\n\n// Return clean structured data\nreturn parsed;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1984,
+        -176
+      ],
+      "id": "e6370105-f8a7-4070-a6fb-434ef9ce2651",
+      "name": "Code Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Try to extract the raw text from various LLM output structures\nlet raw;\n\n// Handle Gemini structure\nif ($json.content && Array.isArray($json.content.parts)) {\n  raw = $json.content.parts\n    .map(p => (typeof p.text === 'string' ? p.text : ''))\n    .join('')\n    .trim();\n}\n\n// Handle OpenAI-like structure\nelse if ($json.message && typeof $json.message.content === 'string') {\n  raw = $json.message.content.trim();\n}\n\n// Fallback: try any string field\nelse if (typeof $json.text === 'string') {\n  raw = $json.text.trim();\n}\n\n// If still undefined, stringify whatever came in\nif (!raw || raw.length === 0) {\n  raw = JSON.stringify($json);\n}\n\n// Remove markdown fences or stray whitespace\nconst cleaned = raw.replace(/```json|```/g, '').trim();\n\n// Try to locate the first JSON object in case Gemini added text before/after it\nconst jsonMatch = cleaned.match(/\\{[\\s\\S]*\\}/);\nif (!jsonMatch) {\n  throw new Error('No JSON object found in Gemini response.\\nRaw: ' + cleaned);\n}\nconst jsonText = jsonMatch[0];\n\n// Parse the JSON safely\nlet parsed;\ntry {\n  parsed = JSON.parse(jsonText);\n} catch (e) {\n  throw new Error('Failed to parse JSON.\\nRaw text:\\n' + jsonText + '\\nError: ' + e.message);\n}\n\n// Return clean structured data\nreturn parsed;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1984,
+        16
+      ],
+      "id": "9de788bb-3682-4986-8e7b-c3ba83803a6b",
+      "name": "Code Parser1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Try to extract the raw text from various LLM output structures\nlet raw;\n\n// Handle Gemini structure\nif ($json.content && Array.isArray($json.content.parts)) {\n  raw = $json.content.parts\n    .map(p => (typeof p.text === 'string' ? p.text : ''))\n    .join('')\n    .trim();\n}\n\n// Handle OpenAI-like structure\nelse if ($json.message && typeof $json.message.content === 'string') {\n  raw = $json.message.content.trim();\n}\n\n// Fallback: try any string field\nelse if (typeof $json.text === 'string') {\n  raw = $json.text.trim();\n}\n\n// If still undefined, stringify whatever came in\nif (!raw || raw.length === 0) {\n  raw = JSON.stringify($json);\n}\n\n// Remove markdown fences or stray whitespace\nconst cleaned = raw.replace(/```json|```/g, '').trim();\n\n// Try to locate the first JSON object in case Gemini added text before/after it\nconst jsonMatch = cleaned.match(/\\{[\\s\\S]*\\}/);\nif (!jsonMatch) {\n  throw new Error('No JSON object found in Gemini response.\\nRaw: ' + cleaned);\n}\nconst jsonText = jsonMatch[0];\n\n// Parse the JSON safely\nlet parsed;\ntry {\n  parsed = JSON.parse(jsonText);\n} catch (e) {\n  throw new Error('Failed to parse JSON.\\nRaw text:\\n' + jsonText + '\\nError: ' + e.message);\n}\n\n// Return clean structured data\nreturn parsed;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1984,
+        208
+      ],
+      "id": "9a5e3600-9e71-4466-a108-1fb8b28dcf40",
+      "name": "Code Parser2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "New Email Trigger": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Required Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Classifer": {
+      "main": [
+        [
+          {
+            "node": "Task Assignee",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Task Assignee": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Required Fields": {
+      "main": [
+        [
+          {
+            "node": "Email Classifer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Sales Team Email Generator",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Support Team Email Generator",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Billing Team Email Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales Team Email Generator": {
+      "main": [
+        [
+          {
+            "node": "Code Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Support Team Email Generator": {
+      "main": [
+        [
+          {
+            "node": "Code Parser1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Sales Team": {
+      "main": [
+        [
+          {
+            "node": "labeling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Support Team": {
+      "main": [
+        [
+          {
+            "node": "labeling3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Billing Team": {
+      "main": [
+        [
+          {
+            "node": "labeling2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Billing Team Email Generator": {
+      "main": [
+        [
+          {
+            "node": "Code Parser2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Parser": {
+      "main": [
+        [
+          {
+            "node": "Notify Sales Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Parser1": {
+      "main": [
+        [
+          {
+            "node": "Notify Support Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Parser2": {
+      "main": [
+        [
+          {
+            "node": "Notify Billing Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "labeling": {
+      "main": [
+        []
+      ]
+    },
+    "labeling3": {
+      "main": [
+        []
+      ]
+    },
+    "labeling2": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3d7754b2-c8fd-486a-886d-a9ca96b99552",
+  "meta": {
+    "templateId": "email_triage_agent_with_gmail",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9afcab20565303c321815d1725e359d8a65d6ea3d1397e8f399bde03d74bb589"
+  },
+  "id": "YgPWyA8qsKXg56Pm",
+  "tags": []
+}

@@ -1,0 +1,199 @@
+{
+  "name": "Aivara-rag",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -112,
+        0
+      ],
+      "id": "9ca78831-312f-4858-9d70-9315df7624c1",
+      "name": "When chat message received",
+      "webhookId": "51701b58-9c60-40af-8fa0-c27b2a99f0ac"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are AIVARA AI Assistant.\n\nUse retrieved context to answer questions about AIVARA and its services.\nNever mention RAG, retrieval, embeddings, or knowledge base in replies.\n\nIf the user asks who you are or what you can help with, say:\n   “I can help you learn more about AIVARA’s services — including AI analytics, web and app development, workflow automation, and digital strategy.”\n\nIf relevant context is missing or the user requests to contact support:\n1. Ask for their full name, contact number, and email.\n2. After receiving all required details, you must tell the user:\n“Thank you! We’ve received your information and will send your query to our support team. You should hear back shortly.”\nDo not output any JSON, variables, or internal references.\nDo not return JSON, variables, or raw outputs.\n3. Then trigger the Send-to-Support action.\n4. If any detail is missing, ask only for the missing one.\n\nStay polite, concise, and professional."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        0
+      ],
+      "id": "9e026ac9-61b6-46e4-8f5a-23c09744febf",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        64,
+        224
+      ],
+      "id": "f15b8159-1c5e-4af2-b431-2b5ef1b69365",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "hlsxoSccxOCDKPgu",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        224
+      ],
+      "id": "3079735a-509f-4599-807d-e7795c3e13bc",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://prod-1-data.ke.pinecone.io/assistant/chat/aivara-rag",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Api-Key",
+              "value": "pcsk_2MCuDK_4LpZvTDMsVq3m7t9bTj9zgs4EPmKtGQFD8GPRe6SeNMDcSgttiEDsYq8DwsUhWx"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Pinecone-API-Version",
+              "value": "2025-04"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.chatInput }}\"\n    }\n  ],\n  \"stream\": false,\n  \"model\": \"gpt-4o\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        416,
+        224
+      ],
+      "id": "9439d080-2d42-4398-8b95-c18b8c63cf67",
+      "name": "RAG Knowledge base"
+    },
+    {
+      "parameters": {
+        "sendTo": "charan.naikk06@gmail.com",
+        "subject": "New query submission",
+        "emailType": "text",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        576,
+        224
+      ],
+      "id": "5891f4f8-8744-4dea-a60d-de510359eff1",
+      "name": "notify support team",
+      "webhookId": "e25e095a-dc39-442f-bf60-0654c5034cba",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "zf7osRP05LC5M6vB",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG Knowledge base": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "notify support team": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c32a4d1f-e7c6-4de9-9fed-bfa5bbeba039",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9afcab20565303c321815d1725e359d8a65d6ea3d1397e8f399bde03d74bb589"
+  },
+  "id": "vrYX7Vq4Zij16KlN",
+  "tags": []
+}

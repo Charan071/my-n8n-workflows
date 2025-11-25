@@ -1,0 +1,208 @@
+{
+  "name": "Minimal Lead Enrichment (Explorium + Google Sheets)",
+  "nodes": [
+    {
+      "id": "LeadWebhook",
+      "name": "Lead Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1800,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-enrichment",
+        "responseMode": "onReceived",
+        "options": {
+          "responseContentType": "application/json"
+        }
+      }
+    },
+    {
+      "id": "NormalizeLead",
+      "name": "Normalize Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1540,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\nconst email = (item.email || \"\").trim().toLowerCase();\nconst name = (item.name || \"\").trim();\nconst company = (item.company || \"\").trim();\nconst websiteRaw = (item.website || \"\").trim();\n\n// strip protocol and trailing slash\nconst website = websiteRaw\n  .toLowerCase()\n  .replace(/^https?:\\/\\//, \"\")\n  .replace(/\\/$/, \"\");\n\nlet first_name = \"\";\nlet last_name = \"\";\n\nif (name) {\n  const parts = name.split(/\\s+/);\n  first_name = parts[0];\n  last_name = parts.slice(1).join(\" \");\n}\n\nreturn [{\n  json: {\n    email,\n    name,\n    first_name,\n    last_name,\n    company,\n    website,\n    source: item.source || \"form\",\n    submitted_at: new Date().toISOString()\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "ValidLead",
+      "name": "Valid Lead?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -1300,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.email }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        },
+        "combineOperation": "any"
+      }
+    },
+    {
+      "id": "InvalidNoOp",
+      "name": "Invalid Lead (No-op)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1060,
+        460
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "ExploriumMatch",
+      "name": "Explorium Match API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1060,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.explorium.ai/v1/prospects/match",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_key",
+              "value": "8abba16c6e1a4b70bb6979463dbb360b"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"prospects_to_match\": [ { \"email\": $json.email, \"full_name\": $json.name, \"company_name\": $json.company, \"company_domain\": $json.website } ] } }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "TransformEnrichment",
+      "name": "Transform Enrichment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -820,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const base = $node[\"Normalize Lead\"].json;\nconst res = $input.first().json;\n\nconst out = { ...base };\n\n// Explorium commonly returns `matched_prospects`.\nconst m = Array.isArray(res.matched_prospects) && res.matched_prospects[0]\n  ? res.matched_prospects[0]\n  : null;\n\nif (!m) {\n  out.enrichment_status = 'no_match';\n  out.enrichment_timestamp = new Date().toISOString();\n  out.match_confidence = null;\n  // leave enrichment fields empty\n  out.job_title = '';\n  out.seniority = '';\n  out.linkedin_url = '';\n  out.company_name = base.company;\n  out.company_domain = base.website;\n  out.company_size = '';\n  out.industry = '';\n  out.country = '';\n  out.city = '';\n  out.state = '';\n\n  return [{ json: out }];\n}\n\n// Try to be defensive about field names\nconst person = m.person || {};\nconst company = m.company || {};\n\nout.enrichment_status = 'matched';\nout.enrichment_timestamp = new Date().toISOString();\nout.match_confidence = m.confidence ?? null;\n\nout.job_title = m.job_title || person.job_title || '';\nout.seniority = m.seniority || person.seniority || '';\nout.linkedin_url = m.linkedin_url || person.linkedin || person.linkedin_url || '';\n\nout.company_name = m.company_name || company.name || base.company;\nout.company_domain = m.company_domain || company.domain || base.website;\nout.company_size = m.company_size || company.size || '';\nout.industry = m.industry || company.industry || '';\nout.country = m.country || person.country || company.country || '';\nout.city = m.city || person.city || company.city || '';\nout.state = m.state || person.state || company.state || '';\n\nreturn [{ json: out }];\n"
+      }
+    },
+    {
+      "id": "AppendToSheet",
+      "name": "Append to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [
+        -580,
+        300
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": "1__JSK4yrddCcjkymixZ6gQg3lmnlJQWaLBFwuUlu2XM",
+        "sheetName": "Sheet1",
+        "options": {
+          "valueInputMode": "RAW"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": ""
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Lead Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Lead": {
+      "main": [
+        [
+          {
+            "node": "Valid Lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Lead?": {
+      "main": [
+        [
+          {
+            "node": "Explorium Match API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Invalid Lead (No-op)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Explorium Match API": {
+      "main": [
+        [
+          {
+            "node": "Transform Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Append to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "id": "MinimalLeadEnrichmentExplorium",
+  "tags": []
+}
